@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#Exercise 1 of ch 2 in the advanced bash scripting guide
+#Filename: date-exercise-abs-guide
+#Author: M. J. Nunes Jacobs
+LC_TIME=de_DE.UTF-8
+LOGFILE=/storage/workspace01/bash-skripte/startup-script-abs-guide.log
+exec > >(tee "$LOGFILE")
+printf 'Heute ist %s\n' \
+	"$(date +'%A. der %-d %B %Y')"
+
+printf '\nEingeloggte User sind:\n %s\n' \
+	"$(who | awk '{print $1}'| sort -u)"
+
+printf '\ndieser Rechner läuft mit Luft und Liebe seit: %s \n' \
+	"$(uptime -p | sed -e 's/^up / /' \
+	-e 's/days\?/Tagen/'\
+	-e 's/hours\?/Stunden/'\
+	-e 's/minutes\?/Minuten/')"
