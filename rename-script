@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#Title: rename-script
+#Author: M.J. Nunes Jacobs
+
+List="one two three"
+
+for a in $List
+do
+	echo "$a"	

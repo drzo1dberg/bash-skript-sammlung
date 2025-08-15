@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#set theme (flavour) <latte|frappe|macchiato|mocha>
+#Filename: set-catppuccin-theme
+
+CONFIG_FILE="$HOME/.config/nvim/lua/custom/plugins/catppuccin.lua"
