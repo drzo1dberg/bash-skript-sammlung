@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#Arithmetic vs string comparsions from ABS on tldp.org
+#Filename: arithmeticVsStringComparsion
+
+a=4
+b=5
+
+echo
+
+if [ "$a" -ne "$b" ]
+then
+	echo "$a is not equal to $b"
+	echo "(arithmetic comparison)"
+fi
+
+echo
+
+if [ "$a" != "$b" ]
+then
+	echo "$a is not equal to $b."
+	echo "(string comparison)"
+fi
+
+echo
+
+exit 0

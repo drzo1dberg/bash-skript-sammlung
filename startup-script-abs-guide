@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #Exercise 1 of ch 2 in the advanced bash scripting guide
-#Filename: date-exercise-abs-guide
+#Filename: startup-script-abs-guide
 #Author: M. J. Nunes Jacobs
 LC_TIME=de_DE.UTF-8
-LOGFILE=/storage/workspace01/bash-skripte/startup-script-abs-guide.log
+LOGFILE=/var/log/startup-script-abs-guide.log
 exec > >(tee "$LOGFILE")
 printf 'Heute ist %s\n' \
 	"$(date +'%A. der %-d %B %Y')"
