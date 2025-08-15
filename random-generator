@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#Author: M.J. Nunes Jacobs - the code is from tldp.org/LDP/abs/html/randomvar.html#EX21
+#Filename: random-generator
+
+# $RANDOM returns a different random integer at each invocation
+# the nominal range of random is: 0 - 32767 (signed 16-bit integer)
+
+MAXCOUNT=10
+count=1
+
+echo
+echo "$MAXCOUND random numbers:"
+echo "---------------------"
+while [ "$count" -le $MAXCOUNT ] #generate 10 random numbers
+do
+    number=$RANDOM
+    echo $number
+    let "count += 1"
+done
+echo "---------------------"
