@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# download_mailexport_basicAuth
+
+set -u
+
+LIST_FILE="${1:-urls.txt}"
+USER_ARG="${2:-${BASIC_USER:-}}"
+PASS_ARG="${3:-${BASIC_PASS:-}}"
+
+FILTER="${FILTER:-%40gtmittelrhein}"
+
+if [[ ! -f "$LIST_FILE" ]]; then
+  echo "Datei nicht gefunden: $LIST_FILE" >&2
+  exit 1
+fi
+
+if [[ -z "${USER_ARG:-}" || -z "${PASS_ARG:-}" ]]; then
+  read -r -p "Basic-Auth Benutzername: " USER_ARG
+  read -r -s -p "Basic-Auth Passwort: " PASS_ARG; echo
+fi
+
+rg -N --no-filename -o "https?://[^[:space:]]*${FILTER}[^[:space:]]*" "$LIST_FILE" \
+| while IFS= read -r url || [[ -n "$url" ]]; do
+
+    url="${url%$'\r'}"
+    url="${url%"${url##*[![:space:]]}"}"
+
+    if [[ ! "$url" =~ ^https?://[^[:space:]]+$ ]]; then
+      echo "Überspringe (keine saubere URL erkannt): $url" >&2
+      continue
+    fi
+
+    echo "Lade: $url"
+
+    if ! curl -fL --retry 3 -u "$USER_ARG:$PASS_ARG" -OJ "$url"; then
+      echo "Fehler beim Download: $url" >&2
+    fi
+done
