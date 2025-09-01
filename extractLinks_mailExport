@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#Filename: extractLinks_mailExport
+
+set -euo pipefail
+
+IN="${1:-link.txt}"
+OUT="${2:-filtered.txt}"
+
+
+PATTERN='https?:://[^[:space:]]*%40(?:rainerhart|consultanthart)[^[:space:]]*'
+
+rg -N --no-filename -o -i "$PATTERN" "$IN" | sed 's/$/\r/' > "$OUT"
+
+echo "Fertig: $OUT (Zeilentrenner: CRLF \\r\\n)"
