@@ -8,7 +8,7 @@ USER_ARG="${2:-${BASIC_USER:-}}"
 PASS_ARG="${3:-${BASIC_PASS:-}}"
 
 FILTER="${FILTER:-%40gtmittelrhein}"
-
+# sanity test ob file und login
 if [[ ! -f "$LIST_FILE" ]]; then
   echo "Datei nicht gefunden: $LIST_FILE" >&2
   exit 1
@@ -18,20 +18,22 @@ if [[ -z "${USER_ARG:-}" || -z "${PASS_ARG:-}" ]]; then
   read -r -p "Basic-Auth Benutzername: " USER_ARG
   read -r -s -p "Basic-Auth Passwort: " PASS_ARG; echo
 fi
-
+# ripgrep nach dem filter in der download url eingebettet von nicht leerzeichen strings in der liste 
 rg -N --no-filename -o "https?://[^[:space:]]*${FILTER}[^[:space:]]*" "$LIST_FILE" \
+# jede gefundene zeile wird in die while gepiped
 | while IFS= read -r url || [[ -n "$url" ]]; do
-
+# windows to unix cleanup entfernt CR 
     url="${url%$'\r'}"
+# windows to unix cleanup entfernt trailing whitespace 
     url="${url%"${url##*[![:space:]]}"}"
-
+# url check 
     if [[ ! "$url" =~ ^https?://[^[:space:]]+$ ]]; then
       echo "Überspringe (keine saubere URL erkannt): $url" >&2
       continue
     fi
 
     echo "Lade: $url"
-
+# downloaden der datei
     if ! curl -fL --retry 3 -u "$USER_ARG:$PASS_ARG" -OJ "$url"; then
       echo "Fehler beim Download: $url" >&2
     fi
