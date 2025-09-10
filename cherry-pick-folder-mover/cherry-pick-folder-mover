@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# filename: cherry-pick-folder-mover
+# author: m. j. nunes jacobs
+# picks files from subfolder into root folder and deletes empty subfolder
+
+set -euo pipefail
+shopt -s nullglob
+
+include_hidden=false
+dry_run=false
+rename_on_conflict=true
+
+#parse arguments ($@)
+for arg in "$@"; do
+    case "$arg" in
+        --include-hidden)   include_hidden=true ;;
+        --dry-run)          dry_run=true ;;
+        --no-rename)        rename_on_conflict=false ;;
+        *)  echo "Unknown Option: $arg" >&2; exit 2 ;;
+    esac
+done
+
+if [[ "$include_hidden" == true ]]; then
+    shopt -s dotglob
+fi
+
+root="$PWD"
+moved=0
+skipped=0
+
+#get the first layer of subfolder
+for dir in "$root"/*/; do
+    [[ -d "$dir" ]] || continue
+    #get files in folder
+    for file in "$dir"*; do
+        [[ -f "$file" ]] || continue
+
+        base="${file##*/}"
+        dest="$root/$base"
+
+        #conflict handling
+        if [[ -e "$dest" ]]; then
+            if [[ "$rename_on_conflict" == true ]]; then
+                name="${base%.*}"
+                ext="${base##*.}"
+                # check if there is a file extension
+                if [[ "$name" == "$base" ]]; then
+                    ext=""
+                fi
+
+                i=1
+                while true; do
+                    if [[ -n "$ext" && "$name" != "$base" ]]; then
+                        candidate="$root/${name} (${i}).${ext}"
+                    else
+                        candidate="$root/${base} (${i})"
+                    fi
+                    if [[ ! -e "$candidate" ]]; then
+                        dest="$candidate"
+                        break
+                    fi
+                    ((i++))
+                done
+            else
+                ((skipped++))
+                echo "Skipping because $base already exists"
+                continue
+            fi
+        fi
+
+        if [[ "$dry_run" == true ]]; then
+            echo "mv -- '$file' '$dest'"
+        else
+            mv -- "$file" "$dest"
+        fi
+        ((moved++))
+    done
+    # TODO: delete subfolder "$dir" if it is empty after moving files
+done
+
+echo "Finished. Moved: $moved file(s). Skipped: $skipped."
