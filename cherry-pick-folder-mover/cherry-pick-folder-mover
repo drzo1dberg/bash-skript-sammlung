@@ -59,10 +59,10 @@ for dir in "$root"/*/; do
                         dest="$candidate"
                         break
                     fi
-                    ((i++))
+                    ((i+=1))
                 done
             else
-                ((skipped++))
+                ((++skipped))
                 echo "Skipping because $base already exists"
                 continue
             fi
@@ -73,7 +73,7 @@ for dir in "$root"/*/; do
         else
             mv -- "$file" "$dest"
         fi
-        ((moved++))
+        ((++moved))
     done
     # TODO: delete subfolder "$dir" if it is empty after moving files
 done
