@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+#filename: scan-for-tls-on-azure
+#author: mnj@grothe.it
+#description: scans azure fileshares for tls version
+
+set -euo pipefail
+#debugmode gives every line out on stdout
+set -x
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <TENANT-ID> [output.csv]"
+    exit 1
+fi
+
+TENANT_ID="$1"
+OUT_CSV="${2:-storage_tls_${TENANT_ID}.csv}"
+
+echo ">>>>> LOGIN <<<<<"
+az login --tenant "$TENANT_ID" --allow-no-subscriptions >/dev/null
+
+#csv headers
+echo "tenantId,subscriptionId,subscriptionName,resourceGroup,accountName,location,sku,kind,httpsOnly,allowBlobPublicAccess,minimumTlsVersion" > "$OUT_CSV"
+
+while IFS=$'\t' read -r SUB_ID SUB_NAME; do
+    [[ -z "${SUB_ID:-}" ]] && continue
+    az account set --subscription "$SUB_ID"
+
+#list storage accounts write to csv
+az storage account list -o json \
+    | jq -r --arg t "$TENANT_ID" --arg s "$SUB_ID" --arg sn "$SUB_NAME" '
+        .[] | [
+        $t,
+        $s,
+        $sn,
+        .resourceGroup,
+        .name,
+        .primaryLocation,
+        .sku.name,
+        .kind,
+        ( .enableHttpsTrafficOnly | tostring ),
+        ( .allowBlobPublicAccess // "null" | tostring),
+        ( .minimumTlsVersion // "unset" )
+        ] | @csv
+' >> "$OUT_CSV"
+
+done < <(az account list --all \
+    --query "[?tenantId=='${TENANT_ID}'].{id:id,name:name}" -o tsv)
+
+echo "Fertig: $OUT_CSV"

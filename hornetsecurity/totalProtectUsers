@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+#filename: totalProtectUsers
+#author: michael j. nunes jacobs
+#description: fetches all users from our tenant with totalprotect booked
+# 0) load .ENV
+# 1) fetch hierarchy
+# 2) filter only customer
+# 3) call api to check if customer is using TotalProtect
+
+# Load env
+ENV_FILE="${1:-.env}"
+if [[ ! -f "$ENV_FILE" ]]; then
+    echo "Fehler: Env Datei '$ENV_FILE' wurde nicht gefunden. Bitte als erstes Arg angeben oder im Folder anlegen." >&2
+    exit 1
+fi
+
+#spellcheck und importiere die env variablen zeilenweise
+export $(grep -v '^\s*#' "$ENV_FILE" | xargs -d $'\n')
+
+# notwendige variablen checken
+required_vars=(APP_ID APP_VERSION CP_TOKEN AUTH_TOKEN OBJECT_ID)
+#variable expansion on required_vars into array
+for v in "${required_vars[@]}"; do
+    if [[ -z "${!v:-}" ]]; then
+        echo "Fehler: Variable $v fehlt in $ENV_FILE" >&2
+        exit 1
+    fi
+done
+
+# default vars
+BASE_URL="${BASE_URL:-https://cp.hornetsecurity.com/api/v0/}"
+PAGE_SIZE="${PAGE_SIZE:-1000}"
+
+# GET hierarchy
+HIER_URL="${BASE_URL}hierarchy/?object_id=${OBJECT_ID}&size=${PAGE_SIZE}"
+
+echo "HornetSecurity hierarchy: $HIER_URL"
+# DEBUG: Request
+echo -e "\n[REQ] GET  $HIER_URL"   # DEBUG
+
+HTTP_RAW=$(curl -sS -w $'\n%{http_code}' \
+    --location "$HIER_URL" \
+    --header "App-ID: ${APP_ID}" \
+    --header "App-Version: ${APP_VERSION}" \
+    --header "CP-Token: ${CP_TOKEN}" \
+    --header "Authorization: Token ${AUTH_TOKEN}")
+HTTP_CODE="${HTTP_RAW##*$'\n'}"
+HIER_BODY="${HTTP_RAW%$'\n'*}"
+
+# DEBUG: Response
+echo -e "[RES $HTTP_CODE]\n$HIER_BODY\n"   # DEBUG
+
+if [[ "$HTTP_CODE" != "200" ]]; then
+    echo "Fehler: Hierarchy-Request HTTP $HTTP_CODE" >&2
+    echo "${HIER_BODY}" | head -c 300 >&2
+    echo >&2
+    exit 1
+fi
+
+# FILTER hierarchy on response type != "partner"
+echo "" 1>/dev/null
+
+RESULT_LINES=()
+
+while IFS=$'\t' read -r OBJ_ID OBJ_NAME OBJ_TYPE; do
+    # ID säubern
+    OBJ_ID_CLEAN="${OBJ_ID//[^0-9]/}"
+
+    #CHECK AUTO-REMEDIATE STATUS
+  AR_CHECK_URL="${BASE_URL}thirdparty/o365/auto_remediate/?object_id=${OBJ_ID_CLEAN}"
+# DEBUG: Request
+echo -e "\n[REQ] GET  $AR_CHECK_URL   # ${OBJ_NAME} (${OBJ_ID_CLEAN})"
+
+  AR_RAW=$(curl -sS -w $'\n%{http_code}' \
+        --location "$AR_CHECK_URL" \
+        --header "App-ID: ${APP_ID}" \
+        --header "App-Version: ${APP_VERSION}" \
+        --header "CP-Token: ${CP_TOKEN}" \
+        --header "Authorization: Token ${AUTH_TOKEN}")
+    AR_CODE="${AR_RAW##*$'\n'}"
+    AR_BODY="${AR_RAW%$'\n'*}"
+
+    # DEBUG: Response
+    echo -e "[RES $AR_CODE]\n$AR_BODY"   # DEBUG
+
+    if [[ "$AR_CODE" == "200" ]]; then
+        UPDATED="$(echo "$AR_BODY" | jq -r '.updated // empty' 2>/dev/null || echo "")"
+        if [[ "$UPDATED" == "true" ]]; then
+            :
+        else
+            # Permission Link abrufen
+            PERM_URL="${BASE_URL}thirdparty/o365/auto_remediate_permission_link/"
+
+            # DEBUG: Request
+            echo -e "[REQ] POST $PERM_URL   ?object_id=${OBJ_ID_CLEAN}"   # DEBUG
+
+            PERM_RAW=$(curl -sS -w $'\n%{http_code}' \
+                -X POST \
+                -G --data-urlencode "object_id=${OBJ_ID_CLEAN}" \
+                --location "$PERM_URL" \
+                --header "App-ID: ${APP_ID}" \
+                --header "App-Version: ${APP_VERSION}" \
+                --header "CP-Token: ${CP_TOKEN}" \
+                --header "Authorization: Token ${AUTH_TOKEN}" \
+                --header "Accept: application/json")
+
+            PERM_CODE="${PERM_RAW##*$'\n'}"
+            PERM_BODY="${PERM_RAW%$'\n'*}"
+
+            # DEBUG: Response
+            echo -e "[RES $PERM_CODE]\n$PERM_BODY"   # DEBUG
+
+    if [[ "$PERM_CODE" == "200" ]]; then
+        PERM_LINK="$(echo "$PERM_BODY" | jq -r '.permission_link // empty' 2>/dev/null || echo "")"
+        if [[ -n "$PERM_LINK" ]]; then
+            RESULT_LINES+=("$(jq -n --arg id "$OBJ_ID_CLEAN" --arg name "$OBJ_NAME" --arg link "$PERM_LINK" \
+                '{id: ($id|tonumber), name: $name, permission_link: $link}')")
+        fi
+    else
+        :
+    fi
+fi
+else
+ :
+fi
+done < <(echo "$HIER_BODY" | jq -r '
+    .hierarchy[]
+    | select(.type != "partner")
+    | [.id, .name, .type]
+    | @tsv
+')
+
+if ((${#RESULT_LINES[@]}==0)); then
+  echo '[]'
+else
+  printf '%s\n' "${RESULT_LINES[@]}" | jq -s .
+fi
