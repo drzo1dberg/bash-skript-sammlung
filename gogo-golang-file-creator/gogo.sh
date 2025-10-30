@@ -23,5 +23,4 @@ go mod tidy
 ls
 popd >/dev/null
 
-# öffne mit v wie bei dir
 nvim "./$DIR/main.go"
