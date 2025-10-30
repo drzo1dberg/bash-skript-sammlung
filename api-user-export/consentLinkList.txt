@@ -1,0 +1,5 @@
+ {
+    "id": 312356705,
+    "name": "schmidtmail.eu",
+    "permission_link": "https://login.microsoftonline.com/98b37084-77a7-4767-86be-7c73d984ef99/v2.0/adminconsent?scope=https://graph.microsoft.com/.default&client_id=06a28130-4254-4170-ab57-964509790334&state=RT-9G4juQLG4MKR&redirect_uri=https://cp.cloud-security.net/api/v0/thirdparty/onboarding_redirect/"
+  }, PROBLEM
