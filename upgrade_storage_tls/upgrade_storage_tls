@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# filename: upgrade_storage_tls.
+# author: mnj@grothe.it
+# description: Set Azure Storage Account minimum TLS version to TLS1_2 (single account)
+
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage:
+  $0 --tenant <TENANT_ID> --subscription <SUB_ID_OR_NAME> --resource-group <RG> --account <STORAGE_ACCOUNT_NAME>
+Options:
+  --tenant         Azure AD Tenant ID (Kunde)
+  --subscription   Subscription ID oder Name
+  --resource-group Resource Group des Storage Accounts
+  --account        Storage Account Name
+Examples:
+  $0 --tenant 11111111-2222-3333-4444-555555555555 \\
+     --subscription 00000000-aaaa-bbbb-cccc-111111111111 \\
+     --resource-group rg-prod-core --account mystorageprod
+EOF
+}
+
+TENANT=""
+SUB=""
+RG=""
+ACC=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --tenant) TENANT="$2"; shift 2 ;;
+    --subscription) SUB="$2"; shift 2 ;;
+    --resource-group) RG="$2"; shift 2 ;;
+    --account) ACC="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown arg: $1"; usage; exit 1 ;;
+  esac
+done
+
+if [[ -z "$TENANT" || -z "$SUB" || -z "$RG" || -z "$ACC" ]]; then
+  usage; exit 1
+fi
+
+echo ">>>>> LOGIN to tenant: $TENANT"
+# Falls kein Browser verfügbar ist, ersetze die folgende Zeile durch:
+# az login --use-device-code --tenant "$TENANT" --allow-no-subscriptions >/dev/null
+az login --tenant "$TENANT" --allow-no-subscriptions >/dev/null
+
+echo ">>>>> Set subscription: $SUB"
+az account set --subscription "$SUB"
+
+echo ">>>>> Current TLS setting for: $ACC (rg: $RG)"
+CURRENT=$(az storage account show -g "$RG" -n "$ACC" --query "minimumTlsVersion" -o tsv 2>/dev/null || echo "unset")
+echo "minimumTlsVersion: ${CURRENT:-unset}"
+
+if [[ "$CURRENT" == "TLS1_2" ]]; then
+  echo "Nothing to do. Account already at TLS1_2."
+  exit 0
+fi
+
+echo ">>>>> Updating to TLS1_2…"
+az storage account update -g "$RG" -n "$ACC" --min-tls-version TLS1_2 >/dev/null
+
+NEWVAL=$(az storage account show -g "$RG" -n "$ACC" --query "minimumTlsVersion" -o tsv)
+if [[ "$NEWVAL" == "TLS1_2" ]]; then
+  echo "Success: $ACC now enforces minimum TLS: $NEWVAL"
+  exit 0
+else
+  echo "Failed: expected TLS1_2, got: ${NEWVAL:-unset}" >&2
+  exit 2
+fi
