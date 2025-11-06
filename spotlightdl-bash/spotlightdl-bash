@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Minimal Spotlight downloader (landscape only, v4 API), Bash + curl + jq
+
+UA="spotlightdl-bash/1.0"
+OUTDIR="${OUTDIR:-.}"
+LOCALE_ARG="${1:-}"   # optional: pass "de-DE" etc.
+
+# Resolve locale/country (fallback en-US/US)
+resolve_locale() {
+  local spec="$1" lang country
+  if [[ -n "$spec" && "$spec" == *-* ]]; then
+    echo "$spec" "$(cut -d- -f2 <<<"$spec" | tr '[:lower:]' '[:upper:]')"
+    return
+  fi
+  lang="${LANG:-en_US.UTF-8}"
+  lang="${lang%%.*}"
+  lang="${lang/_/-}"         # en-US
+  if [[ "$lang" == *-* ]]; then
+    country="${lang##*-}"; country="${country^^}"
+    echo "$lang" "$country"
+  else
+    echo "en-US" "US"
+  fi
+}
+
+read -r LOCALE COUNTRY <<<"$(resolve_locale "$LOCALE_ARG")"
+
+API="https://fd.api.iris.microsoft.com/v4/api/selection?&placement=88000820&bcnt=4&country=${COUNTRY}&locale=${LOCALE}&fmt=json"
+
+mkdir -p "$OUTDIR"
+
+fetch_urls() {
+  curl -fsSL -A "$UA" --connect-timeout 10 --max-time 20 "$API" \
+  | jq -r '.batchrsp.items[].item | fromjson? | .ad.landscapeImage.asset // empty' \
+  | awk '/^https:\/\// {print}'
+}
+
+download_one() {
+  local url="$1"
+  local name base tmp
+  base="${url##*/}"
+  name="${base%%\?*}"
+  [[ "$name" == *.* ]] || name="${name}.jpg"
+  local dst="${OUTDIR%/}/${name}"
+  [[ -f "$dst" ]] && return 1
+  tmp="${dst}.part"
+  curl -fsSL -A "$UA" --retry 3 --retry-delay 1 --connect-timeout 10 --max-time 60 -o "$tmp" "$url"
+  mv -f "$tmp" "$dst"
+  printf '%s\n' "$dst"
+  return 0
+}
+
+declare -A SEEN=()
+empty_rounds=0
+max_empty=10
+total_new=0
+
+while (( empty_rounds < max_empty )); do
+  round_new=0
+  while IFS= read -r u; do
+    [[ -n "${SEEN[$u]:-}" ]] && continue
+    SEEN[$u]=1
+    if download_one "$u"; then
+      (( round_new++ ))
+      (( total_new++ ))
+    fi
+  done < <(fetch_urls)
+  (( round_new == 0 )) && (( empty_rounds++ )) || empty_rounds=0
+done
+
+# End
