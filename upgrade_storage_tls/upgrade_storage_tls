@@ -42,8 +42,6 @@ if [[ -z "$TENANT" || -z "$SUB" || -z "$RG" || -z "$ACC" ]]; then
 fi
 
 echo ">>>>> LOGIN to tenant: $TENANT"
-# Falls kein Browser verfügbar ist, ersetze die folgende Zeile durch:
-# az login --use-device-code --tenant "$TENANT" --allow-no-subscriptions >/dev/null
 az login --tenant "$TENANT" --allow-no-subscriptions >/dev/null
 
 echo ">>>>> Set subscription: $SUB"
