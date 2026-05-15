@@ -26,27 +26,34 @@ public class MouseJiggle {
     [DllImport("user32.dll")]
     public static extern bool GetCursorPos(out POINT lpPoint);
     [DllImport("user32.dll")]
-    public static extern bool SetCursorPos(int X, int Y);
+    public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);
+    public const uint MOUSEEVENTF_MOVE = 0x0001;
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X; public int Y; }
 }
 "@
 
-Write-Host "Mouse Jiggle gestartet. Intervall: $IntervalSeconds s, Versatz: $Pixels px."
-Write-Host "Zum Beenden: Strg+C"
-
 $direction = 1
+$lastPos = New-Object MouseJiggle+POINT
+[void][MouseJiggle]::GetCursorPos([ref]$lastPos)
+
 while ($true) {
-    $pos = New-Object MouseJiggle+POINT
-    [void][MouseJiggle]::GetCursorPos([ref]$pos)
-
-    $newX = $pos.X + ($Pixels * $direction)
-    $newY = $pos.Y + ($Pixels * $direction)
-
-    [void][MouseJiggle]::SetCursorPos($newX, $newY)
-    Start-Sleep -Milliseconds 200
-    [void][MouseJiggle]::SetCursorPos($pos.X, $pos.Y)
-
-    $direction = -$direction
     Start-Sleep -Seconds $IntervalSeconds
+
+    $currentPos = New-Object MouseJiggle+POINT
+    [void][MouseJiggle]::GetCursorPos([ref]$currentPos)
+
+    if ($currentPos.X -ne $lastPos.X -or $currentPos.Y -ne $lastPos.Y) {
+        # User hat die Maus selbst bewegt -> kein Jiggle noetig
+        $lastPos = $currentPos
+        continue
+    }
+
+    $delta = $Pixels * $direction
+    [MouseJiggle]::mouse_event([MouseJiggle]::MOUSEEVENTF_MOVE, $delta, $delta, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 200
+    [MouseJiggle]::mouse_event([MouseJiggle]::MOUSEEVENTF_MOVE, -$delta, -$delta, 0, [UIntPtr]::Zero)
+
+    [void][MouseJiggle]::GetCursorPos([ref]$lastPos)
+    $direction = -$direction
 }
