@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x /home/nunesjacobs/mousejiggle/jiggle.sh)",
+      "Read(//mnt/c/Program Files/PowerShell/7/**)",
+      "Read(//mnt/c/Users/michael.nunesjacobs/AppData/Local/Microsoft/WindowsApps/**)"
+    ]
+  }
+}
