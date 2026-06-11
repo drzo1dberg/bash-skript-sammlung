@@ -87,38 +87,16 @@ Dazu zwei Funktionen, die die eigene Branch-Disziplin als je ein Kommando umsetz
 
 `gclean` stellt den Default-Endzustand her: auf den Default-Branch wechseln, `pull --ff-only`, `fetch --prune`, dann alle gemergten Branches lokal und remote löschen. Der Default-Branch wird aus `origin/HEAD` ermittelt statt hart kodiert, gelöscht wird mit `-d` statt `-D` als Sicherheitsnetz.
 
-### Terraform
+Terraform bekam zunächst ein eigenes Alias-Set, das später bewusst wieder verschwand. Die Begründung steht im Nachtrag weiter unten, der Abschnitt ist deshalb hier raus.
 
-Die History zeigt 41 terraform-Aufrufe, immer im selben Zyklus: fmt, validate, plan, apply, destroy.
-
-| Kommando | Bedeutung |
-|---|---|
-| `tf` | `terraform`, mit funktionierender Completion |
-| `tff` | `terraform fmt -recursive`, erfasst auch Module in Unterverzeichnissen |
-| `tfv` | `terraform validate` |
-| `tfi` | `terraform init` |
-| `tfp` | `terraform plan -out tfplan` |
-| `tfc` | der ganze Pre-Apply-Zyklus: fmt, validate, plan, bricht bei Fehlern früh ab |
-| `tfa` | apply nur gegen ein vorhandenes `tfplan`, räumt es nach Erfolg weg |
-| `tfd` | `terraform destroy` |
-
-`tfa` ist bewusst eine Funktion statt eines blinden `terraform apply tfplan`. Fehlt die Plan-Datei, gibt es eine klare Meldung statt eines Fehlers. Nach erfolgreichem Apply wird `tfplan` gelöscht, damit nie ein veralteter Plan liegen bleibt. Genau diese Planfile-Verwirrung ist in der History mehrfach dokumentiert.
-
-Die Completion für `tf` brauchte eine eigene Zeile in der `.bashrc`, weil die terraform-Completion über `complete -C` am Kommandonamen hängt: `complete -C /usr/bin/terraform tf`.
-
-### Azure, Docker, GitHub CLI
+### Docker und kubectl
 
 | Kommando | Bedeutung |
 |---|---|
-| `az-typo3` | das vollständige `az ssh vm` auf die TYPO3-Test-VM, der längste wiederkehrende Einzeiler der History |
 | `dctx` | Docker-Context-Toggle zwischen `default` und `desktop-linux`, mit Argument expliziter Wechsel |
-| `prs` | `gh pr status`, eigene PRs und Review-Anfragen auf einen Blick |
-| `prv` | `gh pr view --web`, funktioniert jetzt dank `wsl-open` |
-| `lpvar NAME WERT` | setzt eine GitHub-Variable in allen vier Landingpage-Repos, ersetzt eine fünfmal getippte for-Schleife |
-| `tfrun repo [apply\|destroy]` | startet den Terraform-Workflow eines Repos remote über `gh workflow run` |
 | `k` | `kubectl`, mit Completion |
 
-### tmux und Claude
+### tmux
 
 | Kommando | Bedeutung |
 |---|---|
@@ -127,8 +105,6 @@ Die Completion für `tf` brauchte eine eigene Zeile in der `.bashrc`, weil die t
 | `tl`, `ta`, `tk` | list, attach, kill-session |
 | `tsrc` | tmux-Config neu laden, war achtmal voll ausgetippt |
 | `tconf` | Config editieren und direkt neu laden |
-| `clc` | `claude --continue` |
-| `clr` | `claude --resume`, ohne Argument mit Session-Picker |
 
 ### WSL-Brücke zu Windows
 
@@ -165,7 +141,7 @@ Statt eines ssh-Alias gibt es jetzt Host-Einträge in `~/.ssh/config`: `ssh typo
 | Datei | Änderung |
 |---|---|
 | `~/.bash_aliases` | komplett neu strukturiert, alle Aliases oben beschrieben, `please` gefixt, `nvim-sync` zunächst gefixt und im Nachtrag ersatzlos entfernt |
-| `~/.bashrc` | History-Block, `shopt -s globstar autocd cdspell dirspell histverify`, fzf-Bindings, kubectl-Completion, git-Completion für `gco` und `gsw`, tf-Completion, `BROWSER`-Export |
+| `~/.bashrc` | History-Block, `shopt -s globstar autocd cdspell dirspell histverify`, fzf-Bindings, kubectl-Completion, git-Completion für `gco` und `gsw`, `BROWSER`-Export. Die zunächst ergänzte `tf`-Completion ist mit den Terraform-Aliases wieder raus, siehe Nachtrag |
 | `~/.gitconfig` | `push.autoSetupRemote`, `fetch.prune`, `merge.conflictstyle zdiff3`, `branch.sort -committerdate`, git-Aliases `st`, `br`, `lg`, im Nachtrag ein zweiter includeIf für den nvim-Checkout |
 | `~/.tmux.conf` | `escape-time 10`, `renumber-windows on`, Splits und neue Fenster im aktuellen Pfad |
 | `~/.profile` | doppelten PATH-Eintrag von pipx entfernt |
@@ -182,10 +158,10 @@ Zu den shopt-Optionen: `autocd` wechselt in ein Verzeichnis, wenn man nur dessen
 19 Kandidaten flogen raus. Die wichtigsten Begründungen, weil sie das Prinzip zeigen:
 
 - Typo-Aliases wie `cls`, `rl` und `:q` zementieren Fehlgriffe, statt sie zu korrigieren. Die fzf-History-Suche löst das Problem an der Wurzel.
-- Ein `cc`-Alias für Claude hätte den C-Compiler verschattet. Mit go, cargo und make auf dem System ist das ein realistisches Risiko. Stattdessen `clc` und `clr`.
+- Ein `cc`-Alias für Claude hätte den C-Compiler verschattet. Mit go, cargo und make auf dem System ist das ein realistisches Risiko. Die kollisionsfreien `clc` und `clr` kamen ins Set, wurden im Ausmisten danach aber auch wieder entfernt, siehe Nachtrag.
 - `winhome`, `psh`, `wslstatus` und `wslrestart` haben kein einziges belegtes Muster in der History. Naheliegend ist kein Beleg.
-- Ein generisches `azssh` für beliebige VMs klingt gut, aber belegt ist genau eine VM, und dafür ist `az-typo3` der kürzere und schnellere Treffer. Der nötige `az vm list`-Lookup hätte zudem Sekunden gekostet.
-- Ein blindes `alias tfa='terraform apply tfplan'` hätte exakt die Planfile-Fehler wiederholt, die in der History dokumentiert sind. Die Funktionsvariante mit Existenz-Check ist die bessere Antwort.
+- Ein generisches `azssh` für beliebige VMs klingt gut, aber belegt ist genau eine VM. Selbst der dafür gebaute `az-typo3` flog im Ausmisten wieder raus, der generische Wrapper war also doppelt unbegründet.
+- Ein blindes `alias tfa='terraform apply tfplan'` hätte die Planfile-Fehler aus der History wiederholt, deshalb wurde es als Funktion mit Existenz-Check gebaut. Das komplette Terraform-Set ist inzwischen ganz gestrichen, siehe Nachtrag.
 
 ## Nachtrag vom selben Tag
 
@@ -232,6 +208,19 @@ Das legt am Zielort auch die komplette Ordnerstruktur an, also `Zettelkasten`, `
 Zwei Erweiterungen kamen direkt hinterher. Erstens kennt `vl` das Archiv: `zk-archive.sh` verschiebt alte Notizen in Wochenordner unter `Zettelkasten/Archiv/YYYYKW##/`, und sowohl die Rückwärtszählung als auch die Datumssuche laufen per `find` über diese Ordner mit. Ohne das wäre `vl -N` an der Retention-Grenze des Archivers stehen geblieben. Zweitens gibt es die direkte Datumssuche im deutschen Format: `vl -d 12.04.26` übersetzt Tag und Monat in den US-Dateinamen `04-12-26.md` und öffnet die Notiz, egal ob sie in der Wurzel oder in einem Archiv-Wochenordner liegt. Einstellige Tage und Monate sowie vierstellige Jahre wie `31.12.2025` werden normalisiert, ungültige Eingaben und nicht vorhandene Notizen geben eine klare Meldung. Alles im Sandbox-Zettelkasten mit Archiv-Struktur durchgetestet.
 
 Der Archiver selbst läuft seitdem automatisch: montags 09:00 als systemd-User-Timer `zk-archive.timer` mit `Persistent=true`. Der Persistent-Punkt ist unter WSL entscheidend, klassisches cron feuert nur, wenn die Distro zur Minute des Jobs läuft, der systemd-Timer holt einen verpassten Montag beim nächsten Start nach. Eingerichtet wird das vom install-Script im nvim-config-Repo, das `zk-archive.sh` dafür nach `~/.local/bin/zk-archive` verlinkt. Auf Maschinen ohne systemd fällt es auf crontab zurück. `zk-archive.sh` liest den Vault jetzt ebenfalls aus `~/.config/obsidian-vault` statt fest aus `~/bf`, womit Archiver, nvim und die Shell-Aliases alle an derselben einen Stellschraube hängen.
+
+## Nachtrag: Aliases nachträglich ausgemistet
+
+drzo1dberg hat das Set danach noch von Hand entschlackt und dabei zwei Kategorien entfernt, die zwar aus der History begründet waren, aber das falsche Signal trugen. Die Korrektur ist wichtig genug für diesen Eintrag, weil sie eine Schwäche der History-Mining-Methode offenlegt: Häufigkeit in der History ist ein verrauschtes Signal.
+
+Raus sind das komplette Terraform-Set `tf`, `tff`, `tfv`, `tfi`, `tfp`, `tfc`, `tfa`, `tfd` samt der `tf`-Completion in der `.bashrc`, dazu `az-typo3`, die GitHub-Automatik `prs`, `prv`, `lpvar`, `tfrun` und die Claude-Kürzel `clc`, `clr`.
+
+Die zwei Leitgründe:
+
+- **Terraform ist zu mächtig für ein Alias.** `apply`, `destroy` und `plan` verändern echte Azure-Infrastruktur. Genau hier ist Tippreibung erwünscht, nicht abgekürzt. Ein Zweitaster wie `tfa` senkt die Schwelle für eine Operation, die bewusst und voll ausgeschrieben laufen soll. Die Häufigkeit in der History war real, aber der falsche Maßstab: oft getippt heißt nicht, dass es kürzer getippt gehört.
+- **TYPO3 war ein History-Zufall.** Die `az ssh vm` und `ssh typo3-test` Zeilen kamen aus einer einzelnen Debugging-Phase und stehen nicht für die normale Arbeitsweise, die VM wird fast nie gebraucht. Das Mining hat einen einmaligen Ausschlag zu einem dauerhaften Shortcut verfestigt und damit ein falsches Incentive gesetzt. Der ssh-config-Host `typo3-test` bleibt als reine Bequemlichkeit bestehen, aber ohne eigenen Alias und ohne den `az-typo3`-Wrapper.
+
+Die übrigen Streichungen folgen demselben Gedanken: `lpvar` und `tfrun` sind seltene, folgenreiche Massenoperationen über mehrere Repos und gehören ausgeschrieben, `prs`, `prv`, `clc` und `clr` waren bequem, aber kein Muster, das die Abkürzung trägt. Was bleibt, ist das Set, das tägliche und harmlose Wege abkürzt: Navigation, git-Status und Commit, tmux, die WSL-Brücke und der Zettelkasten.
 
 ## Was noch offen ist
 
