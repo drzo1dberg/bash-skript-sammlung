@@ -229,6 +229,8 @@ Das legt am Zielort auch die komplette Ordnerstruktur an, also `Zettelkasten`, `
 
 `vl` selbst wurde vom Alias zur Funktion. Ohne Argument öffnet es die Tagesnotiz wie bisher, `vl -1` die letzte existierende Notiz vor heute, `vl -2` die davor. Gezählt wird über vorhandene Dateien statt Kalendertage, am Montag liefert `vl -1` also den letzten Freitag oder Samstag. Weil die Dateinamen im US-Format `%m-%d-%y` über Jahresgrenzen lexikalisch falsch sortieren, übersetzt die Funktion jeden Namen in einen `YYYYMMDD`-Schlüssel und sortiert erst dann, getestet inklusive Jahreswechsel und Fehlerfällen.
 
+Zwei Erweiterungen kamen direkt hinterher. Erstens kennt `vl` das Archiv: `zk-archive.sh` verschiebt alte Notizen in Wochenordner unter `Zettelkasten/Archiv/YYYYKW##/`, und sowohl die Rückwärtszählung als auch die Datumssuche laufen per `find` über diese Ordner mit. Ohne das wäre `vl -N` an der Retention-Grenze des Archivers stehen geblieben. Zweitens gibt es die direkte Datumssuche im deutschen Format: `vl -d 12.04.26` übersetzt Tag und Monat in den US-Dateinamen `04-12-26.md` und öffnet die Notiz, egal ob sie in der Wurzel oder in einem Archiv-Wochenordner liegt. Einstellige Tage und Monate sowie vierstellige Jahre wie `31.12.2025` werden normalisiert, ungültige Eingaben und nicht vorhandene Notizen geben eine klare Meldung. Alles im Sandbox-Zettelkasten mit Archiv-Struktur durchgetestet.
+
 ## Was noch offen ist
 
 - `vl` nutzt das US-Datumsformat `%m-%d-%y`. ISO würde sauber sortieren, aber die Bestandsdateien im Zettelkasten heißen nach altem Schema und müssten mitmigriert werden, inklusive Prüfung auf Querverweise. Nur als bewusste Entscheidung umsetzen.
