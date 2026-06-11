@@ -134,8 +134,6 @@ Zwei Details aus den Tests, die diese Funktionen robuster machen als die nahelie
 | `vl` | Zettelkasten-Tagesnotiz; `vl -1` öffnet die letzte existierende Notiz vor heute, `vl -2` die davor, siehe Nachtrag |
 | `work`, `vault`, `findgit` | wie bisher |
 
-Statt eines ssh-Alias gibt es jetzt Host-Einträge in `~/.ssh/config`: `ssh typo3-test` und `ssh coremw-test`. Das ist dem Alias überlegen, weil es auch für `scp` und `sftp` gilt und die IP nur an einer Stelle steht.
-
 ## Änderungen je Datei
 
 | Datei | Änderung |
@@ -145,7 +143,6 @@ Statt eines ssh-Alias gibt es jetzt Host-Einträge in `~/.ssh/config`: `ssh typo
 | `~/.gitconfig` | `push.autoSetupRemote`, `fetch.prune`, `merge.conflictstyle zdiff3`, `branch.sort -committerdate`, git-Aliases `st`, `br`, `lg`, im Nachtrag ein zweiter includeIf für den nvim-Checkout |
 | `~/.tmux.conf` | `escape-time 10`, `renumber-windows on`, Splits und neue Fenster im aktuellen Pfad |
 | `~/.profile` | doppelten PATH-Eintrag von pipx entfernt |
-| `~/.ssh/config` | Host-Einträge `typo3-test` und `coremw-test` |
 | `~/.local/bin/wsl-open` | neu, Browser- und Datei-Opener für WSL |
 | `~/.config/nvim/` | vier Bugfixes, siehe oben |
 
@@ -218,7 +215,7 @@ Raus sind das komplette Terraform-Set `tf`, `tff`, `tfv`, `tfi`, `tfp`, `tfc`, `
 Die zwei Leitgründe:
 
 - **Terraform ist zu mächtig für ein Alias.** `apply`, `destroy` und `plan` verändern echte Azure-Infrastruktur. Genau hier ist Tippreibung erwünscht, nicht abgekürzt. Ein Zweitaster wie `tfa` senkt die Schwelle für eine Operation, die bewusst und voll ausgeschrieben laufen soll. Die Häufigkeit in der History war real, aber der falsche Maßstab: oft getippt heißt nicht, dass es kürzer getippt gehört.
-- **TYPO3 war ein History-Zufall.** Die `az ssh vm` und `ssh typo3-test` Zeilen kamen aus einer einzelnen Debugging-Phase und stehen nicht für die normale Arbeitsweise, die VM wird fast nie gebraucht. Das Mining hat einen einmaligen Ausschlag zu einem dauerhaften Shortcut verfestigt und damit ein falsches Incentive gesetzt. Der ssh-config-Host `typo3-test` bleibt als reine Bequemlichkeit bestehen, aber ohne eigenen Alias und ohne den `az-typo3`-Wrapper.
+- **TYPO3 war ein History-Zufall.** Die `az ssh vm` und `ssh typo3-test` Zeilen kamen aus einer einzelnen Debugging-Phase und stehen nicht für die normale Arbeitsweise, die VM wird fast nie gebraucht. Das Mining hat einen einmaligen Ausschlag zu einem dauerhaften Shortcut verfestigt und damit ein falsches Incentive gesetzt. Konsequenterweise sind auch die ssh-config-Hosts `typo3-test` und `coremw-test` wieder raus, sie stammen aus derselben Phase. Die `~/.ssh/config` enthält jetzt nur noch die GitHub-Hosts.
 
 Die übrigen Streichungen folgen demselben Gedanken: `lpvar` und `tfrun` sind seltene, folgenreiche Massenoperationen über mehrere Repos und gehören ausgeschrieben, `prs`, `prv`, `clc` und `clr` waren bequem, aber kein Muster, das die Abkürzung trägt. Was bleibt, ist das Set, das tägliche und harmlose Wege abkürzt: Navigation, git-Status und Commit, tmux, die WSL-Brücke und der Zettelkasten.
 
