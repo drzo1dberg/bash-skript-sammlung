@@ -23,6 +23,11 @@
 set -euo pipefail
 
 # ---- Magic numbers / konfigurierbar ----------------------------------------
+# Vault-Aufloesung: explizites ZK_DIR gewinnt, dann ~/.config/obsidian-vault
+# (geschrieben von nvim-config/install.sh --obsidian-location), sonst ~/bf
+if [ -z "${ZK_DIR:-}" ] && [ -r "$HOME/.config/obsidian-vault" ]; then
+  ZK_DIR="$(head -n1 "$HOME/.config/obsidian-vault")/Zettelkasten"
+fi
 ZK_DIR="${ZK_DIR:-$HOME/bf/Zettelkasten}"   # Quelle
 ARCHIVE_SUBDIR="Archiv"                     # Unterordner unter ZK_DIR
 RETENTION_WEEKS=2                           # Anzahl ISO-Wochen die bleiben
