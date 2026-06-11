@@ -164,9 +164,9 @@ Statt eines ssh-Alias gibt es jetzt Host-Einträge in `~/.ssh/config`: `ssh typo
 
 | Datei | Änderung |
 |---|---|
-| `~/.bash_aliases` | komplett neu strukturiert, alle Aliases oben beschrieben, `please` und `nvim-sync` gefixt |
+| `~/.bash_aliases` | komplett neu strukturiert, alle Aliases oben beschrieben, `please` gefixt, `nvim-sync` zunächst gefixt und im Nachtrag ersatzlos entfernt |
 | `~/.bashrc` | History-Block, `shopt -s globstar autocd cdspell dirspell histverify`, fzf-Bindings, kubectl-Completion, git-Completion für `gco` und `gsw`, tf-Completion, `BROWSER`-Export |
-| `~/.gitconfig` | `push.autoSetupRemote`, `fetch.prune`, `merge.conflictstyle zdiff3`, `branch.sort -committerdate`, git-Aliases `st`, `br`, `lg` |
+| `~/.gitconfig` | `push.autoSetupRemote`, `fetch.prune`, `merge.conflictstyle zdiff3`, `branch.sort -committerdate`, git-Aliases `st`, `br`, `lg`, im Nachtrag ein zweiter includeIf für den nvim-Checkout |
 | `~/.tmux.conf` | `escape-time 10`, `renumber-windows on`, Splits und neue Fenster im aktuellen Pfad |
 | `~/.profile` | doppelten PATH-Eintrag von pipx entfernt |
 | `~/.ssh/config` | Host-Einträge `typo3-test` und `coremw-test` |
@@ -187,29 +187,42 @@ Zu den shopt-Optionen: `autocd` wechselt in ein Verzeichnis, wenn man nur dessen
 - Ein generisches `azssh` für beliebige VMs klingt gut, aber belegt ist genau eine VM, und dafür ist `az-typo3` der kürzere und schnellere Treffer. Der nötige `az vm list`-Lookup hätte zudem Sekunden gekostet.
 - Ein blindes `alias tfa='terraform apply tfplan'` hätte exakt die Planfile-Fehler wiederholt, die in der History dokumentiert sind. Die Funktionsvariante mit Existenz-Check ist die bessere Antwort.
 
-## Offene Entscheidungen
+## Nachtrag vom selben Tag
 
-### Das Stray-Repo in github-repos, wichtigster offener Punkt
+Die größten offenen Punkte wurden noch am 11.06. erledigt. Der Ablauf und die Stolpersteine stehen hier, weil sie das heutige Layout erklären.
 
-`~/github-repos/.git` ist ein versehentlicher Clone von `nvim-config` auf oberster Ebene. Damit ist die gesamte Repo-Sammlung Working-Tree eines Git-Repos. Ein unbedachtes `git add .` oder `git clean` auf dieser Ebene würde alle Arbeits-Repos erfassen. Die `weekly commit`-Commits der letzten Monate liefen gegen dieses kaputte Layout, der Remote-Stand ist entsprechend veraltet. Der korrekte Clone liegt unter `~/github-repos/drzo1dberg/nvim-config`, und das neue `nvim-sync` zielt bereits dorthin. Aufräumen:
+### Stray-Repo aufgelöst und der Sync nachgeholt
 
-```bash
-command rm -rf ~/github-repos/.git ~/github-repos/nvim-config
-nvim-sync   # spiegelt die Live-Config in den korrekten Clone
-# danach im Clone committen und pushen
-```
+Der Befund zuerst: `~/github-repos/.git` war ein versehentlicher Clone von `nvim-config` auf oberster Ebene. Damit war die gesamte Repo-Sammlung Working-Tree eines einzigen Git-Repos. Ein unbedachtes `git add .` oder `git clean` auf dieser Ebene hätte alle Arbeits-Repos erfasst, und die `weekly commit`-Commits der letzten Monate liefen gegen dieses kaputte Layout ins Leere. Der Remote-Stand hing rund sieben Monate hinterher.
 
-### nvim-Config direkt als Checkout führen
+Das Stray-Repo wurde von Hand gelöscht. Danach holte `nvim-sync` den Rückstand in den korrekten Clone auf: ein Commit mit den vier nvim-Bugfixes aus der Überholung plus den Obsidian- und Lockfile-Änderungen aus dem Mai, die der alte Sync nie ins Repo gebracht hatte.
 
-Der sauberste Endzustand wäre, `~/.config/nvim` selbst zum Git-Checkout des Repos zu machen. Dann gibt es genau eine Wahrheit, `lazy-lock.json` wandert automatisch mit jedem Commit, und der Sync-Schritt, der vergessen werden kann, existiert nicht mehr. Das `nvim-sync` wäre damit Geschichte. Umsetzung erst nach dem Aufräumen des Stray-Repos.
+Der Push scheiterte zunächst an den Zugriffsrechten, und der Grund ist ein Merkposten für alle Privat-Repos: der Clone zeigte auf `git@github.com`, und dieser Host nutzt laut `~/.ssh/config` den Firmen-Key. Privat-Repos laufen über den SSH-Alias `github-private` mit dem privaten Key. Nach `git remote set-url origin git@github-private:drzo1dberg/nvim-config.git` lief der Push durch.
 
-### Kleinere Punkte
+### nvim-Config als direkter Checkout
 
-- `vl` nutzt das US-Datumsformat `%m-%d-%y`. ISO würde sauber sortieren, aber die Bestandsdateien im Zettelkasten heißen nach altem Schema und müssten mitmigriert werden. Nur als bewusste Entscheidung umsetzen.
-- Das nvim-Keymap `<leader>fp` ruft `Telescope project`, aber das Plugin `telescope-project.nvim` ist nicht installiert. Entweder Plugin ergänzen oder Keymap streichen.
-- `obsidian.nvim` zeigt auf das archivierte Upstream-Repo von epwalsh. Der gepflegte Community-Fork ist `obsidian-nvim/obsidian.nvim`. Läuft aktuell, bekommt aber keine Fixes mehr.
+Nötig war das, weil das Kopier-Modell zwei Wahrheiten pflegt: die Live-Config und die Repo-Kopie. Sobald der Sync-Schritt vergessen wird, driften sie auseinander, und genau dieser Zustand war über Monate eingetreten. Der Umbau beseitigt die Ursache statt des Symptoms:
+
+1. Das `.git` des Clones wurde nach `~/.config/nvim` verschoben. Der Status war sofort sauber, weil Live-Config und Repo nach dem Sync identisch waren.
+2. Identitäts-Falle: die private Git-Identität hing am `includeIf` für `gitdir:~/github-repos/drzo1dberg/`. Am neuen Ort hätte git stillschweigend mit der Arbeits-Identität committet. Deshalb steht in der `~/.gitconfig` jetzt ein zweiter Block, `includeIf "gitdir:~/.config/nvim/"`. Der erste Commit lief verifiziert als `drzo1dberg`.
+3. Die Kopie unter `~/github-repos/drzo1dberg/nvim-config` wurde gelöscht und `nvim-sync` ersatzlos aus `~/.bash_aliases` entfernt.
+
+Der Workflow ist seitdem: in `~/.config/nvim` arbeiten, dort committen und pushen. `lazy-lock.json` wandert automatisch mit jedem Commit, ein vergessbarer Zwischenschritt existiert nicht mehr.
+
+### Zwei Plugin-Fixes in nvim
+
+`obsidian.nvim` zeigte auf das archivierte Upstream-Repo von epwalsh, das keine Fixes und keine Anpassungen an neue nvim-Versionen mehr bekommt. Die Spec zeigt jetzt auf den gepflegten Community-Fork `obsidian-nvim/obsidian.nvim`, frisch geklont als v3.9.0. Die gesamte Workspace-Konfiguration samt `note_path_func` und Frontmatter-Logik blieb unverändert und läuft auf dem Fork fehlerfrei.
+
+Das Keymap `<leader>fp` rief `Telescope project`, aber das Plugin dahinter war nie installiert, die Taste warf nur einen Fehler. Jetzt liegt `telescope-project.nvim` als eigene Spec in `lua/custom/plugins/project.lua`, konfiguriert mit `base_dirs` auf beide Repo-Ordner. Damit zeigt die Taste denselben Projektbestand wie das Shell-Kommando `repo`.
+
+Beide Fixes wurden headless verifiziert und sind als Commit `715461e` gepusht.
+
+## Was noch offen ist
+
+- `vl` nutzt das US-Datumsformat `%m-%d-%y`. ISO würde sauber sortieren, aber die Bestandsdateien im Zettelkasten heißen nach altem Schema und müssten mitmigriert werden, inklusive Prüfung auf Querverweise. Nur als bewusste Entscheidung umsetzen.
+- gh ist nur als `workrepos` eingeloggt. Für PRs auf den Privat-Repos fehlt der `drzo1dberg`-Login, `gh auth login` plus `gh auth switch` würde das lösen.
 - Im Home liegen die Artefakte `xcopy.exe` und `table.html`, beide vermutlich löschbar.
 
 ## Rollback
 
-Der komplette Altstand von `.bashrc`, `.bash_aliases`, `.profile`, `.tmux.conf` und `.gitconfig` liegt unter `~/.dotfiles-backup-2026-06-11/`. Zurückrollen heißt: Datei zurückkopieren, `reload`. Die nvim-Änderungen sind über das nvim-config-Repo nachvollziehbar, sobald der aktuelle Stand committet ist.
+Der komplette Altstand von `.bashrc`, `.bash_aliases`, `.profile`, `.tmux.conf` und `.gitconfig` liegt unter `~/.dotfiles-backup-2026-06-11/`. Zurückrollen heißt: Datei zurückkopieren, `reload`. Die nvim-Änderungen sind seit dem Checkout-Umbau regulär über die Git-History von `~/.config/nvim` nachvollziehbar.
