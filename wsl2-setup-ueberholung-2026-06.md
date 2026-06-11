@@ -155,7 +155,7 @@ Zwei Details aus den Tests, die diese Funktionen robuster machen als die nahelie
 | `mkcd` | Verzeichnis anlegen und hineinwechseln |
 | `psg name` | Prozesssuche ohne das grep-Echo |
 | `week` | öffnet die Obsidian-Wochennotiz über `nvim +ObsidianThisWeek` |
-| `vl` | Zettelkasten-Tagesnotiz, unverändert |
+| `vl` | Zettelkasten-Tagesnotiz; `vl -1` öffnet die letzte existierende Notiz vor heute, `vl -2` die davor, siehe Nachtrag |
 | `work`, `vault`, `findgit` | wie bisher |
 
 Statt eines ssh-Alias gibt es jetzt Host-Einträge in `~/.ssh/config`: `ssh typo3-test` und `ssh coremw-test`. Das ist dem Alias überlegen, weil es auch für `scp` und `sftp` gilt und die IP nur an einer Stelle steht.
@@ -216,6 +216,18 @@ Der Workflow ist seitdem: in `~/.config/nvim` arbeiten, dort committen und pushe
 Das Keymap `<leader>fp` rief `Telescope project`, aber das Plugin dahinter war nie installiert, die Taste warf nur einen Fehler. Jetzt liegt `telescope-project.nvim` als eigene Spec in `lua/custom/plugins/project.lua`, konfiguriert mit `base_dirs` auf beide Repo-Ordner. Damit zeigt die Taste denselben Projektbestand wie das Shell-Kommando `repo`.
 
 Beide Fixes wurden headless verifiziert und sind als Commit `715461e` gepusht.
+
+### Zettelkasten portabel für den Heim-PC
+
+Der Obsidian-Vault hing fest am OneDrive-Mount der Firma und das `vl`-Alias fest an `~/bf`. Für den Umzug auf das Heim-Debian gibt es jetzt eine einzige Stellschraube: `~/.config/obsidian-vault`, eine Datei mit einer Zeile Pfad. Geschrieben wird sie vom install-Script im nvim-config-Repo:
+
+```bash
+~/.config/nvim/install.sh --obsidian-location ~/notizen
+```
+
+Das legt am Zielort auch die komplette Ordnerstruktur an, also `Zettelkasten`, `daily todos`, `Vorlagen` und `Architektur Decision Record`, damit `note_path_func` und die Daily Notes sofort funktionieren. Die Obsidian-Spec in nvim liest die Datei beim Start, die `.bashrc` exportiert sie als `OBSIDIAN_VAULT`, und `vl` wie `vault` greifen darauf zu. Fehlt die Datei, gilt der Work-Vault als Default, auf der Arbeitsmaschine ändert sich also nichts. Verifiziert über einen Negativ-Test: zeigt die Datei auf einen nicht existierenden Pfad, verweigert die Obsidian-Spec das Laden, der Override wird also nachweislich gelesen.
+
+`vl` selbst wurde vom Alias zur Funktion. Ohne Argument öffnet es die Tagesnotiz wie bisher, `vl -1` die letzte existierende Notiz vor heute, `vl -2` die davor. Gezählt wird über vorhandene Dateien statt Kalendertage, am Montag liefert `vl -1` also den letzten Freitag oder Samstag. Weil die Dateinamen im US-Format `%m-%d-%y` über Jahresgrenzen lexikalisch falsch sortieren, übersetzt die Funktion jeden Namen in einen `YYYYMMDD`-Schlüssel und sortiert erst dann, getestet inklusive Jahreswechsel und Fehlerfällen.
 
 ## Was noch offen ist
 
