@@ -7,7 +7,7 @@ LIST_FILE="${1:-urls.txt}"
 USER_ARG="${2:-${BASIC_USER:-}}"
 PASS_ARG="${3:-${BASIC_PASS:-}}"
 
-FILTER="${FILTER:-%40example-customer-1}"
+FILTER="${FILTER:-%40example}"
 # sanity test ob file und login
 if [[ ! -f "$LIST_FILE" ]]; then
   echo "Datei nicht gefunden: $LIST_FILE" >&2

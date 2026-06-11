@@ -7,7 +7,7 @@ IN="${1:-link.txt}"
 OUT="${2:-filtered.txt}"
 
 
-PATTERN='https?:://[^[:space:]]*%40(?:example-customer-2|example-customer-3)[^[:space:]]*'
+PATTERN='https?:://[^[:space:]]*%40(?:example1|example2)[^[:space:]]*'
 
 rg -N --no-filename -o -i "$PATTERN" "$IN" | sed 's/$/\r/' > "$OUT"
 

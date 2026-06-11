@@ -28,7 +28,8 @@ for v in "${required_vars[@]}"; do
 done
 
 # default vars
-BASE_URL="${BASE_URL:-https://api.example.com/api/v0/}"
+# Echten API-Host in die .env legen, hier nur ein Platzhalter
+BASE_URL="${BASE_URL:-https://api.example.com/v0/}"
 PAGE_SIZE="${PAGE_SIZE:-1000}"
 
 # GET hierarchy

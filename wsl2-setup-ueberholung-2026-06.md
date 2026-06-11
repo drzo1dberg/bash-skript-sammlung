@@ -44,7 +44,7 @@ Ohne gesetztes `escape-time` wartet tmux 500 Millisekunden nach jedem ESC, ob no
 
 1. `after/ftplugin/markdown.lua` rief `vim.diagnostic.enable(false)` ohne Filter auf. Das schaltet Diagnostics global für die ganze Session ab. Sobald die erste Markdown-Datei offen war, verschwanden LSP-Diagnostics in allen Buffern, auch in Lua, YAML und Go. Fix: `vim.diagnostic.enable(false, { bufnr = 0 })`, wirkt nur noch auf den Markdown-Buffer.
 2. Das Harpoon-Menü auf `<leader>hh` konnte sich nie öffnen. harpoon2 verlangt die Liste als Argument von `toggle_quick_menu`, ohne Argument schließt es nur. Fix: die Liste wird jetzt übergeben.
-3. In `lua/custom/plugins/init.lua` stand ein `rtp:prepend` auf `/home/user/.opam/...`, ein toter Pfad von einer fremden Maschine. Der Home-User hier heißt `nunesjacobs`, opam existiert nicht. Zeile entfernt.
+3. In `lua/custom/plugins/init.lua` stand ein `rtp:prepend` auf `/home/<user>/.opam/...`, ein toter Pfad von einer fremden Maschine, opam existiert hier nicht. Zeile entfernt.
 4. Das which-key-Label für `<leader>h` behauptete `Git Hunk`, real liegt dort Harpoon. Label korrigiert.
 
 Geprüft und für gesund befunden: das System-Clipboard in nvim. `xclip` läuft über WSLg, yank landet im Windows-Clipboard und zurück, in beide Richtungen real getestet. Kein Eingriff nötig.
@@ -208,7 +208,7 @@ Der Archiver selbst läuft seitdem automatisch: montags 09:00 als systemd-User-T
 
 ## Nachtrag: Aliases nachträglich ausgemistet
 
-drzo1dberg hat das Set danach noch von Hand entschlackt und dabei zwei Kategorien entfernt, die zwar aus der History begründet waren, aber das falsche Signal trugen. Die Korrektur ist wichtig genug für diesen Eintrag, weil sie eine Schwäche der History-Mining-Methode offenlegt: Häufigkeit in der History ist ein verrauschtes Signal.
+Das Set wurde danach noch von Hand entschlackt und dabei zwei Kategorien entfernt, die zwar aus der History begründet waren, aber das falsche Signal trugen. Die Korrektur ist wichtig genug für diesen Eintrag, weil sie eine Schwäche der History-Mining-Methode offenlegt: Häufigkeit in der History ist ein verrauschtes Signal.
 
 Raus sind das komplette Terraform-Set `tf`, `tff`, `tfv`, `tfi`, `tfp`, `tfc`, `tfa`, `tfd` samt der `tf`-Completion in der `.bashrc`, dazu `az-typo3`, die GitHub-Automatik `prs`, `prv`, `lpvar`, `tfrun` und die Claude-Kürzel `clc`, `clr`.
 
@@ -222,7 +222,7 @@ Die übrigen Streichungen folgen demselben Gedanken: `lpvar` und `tfrun` sind se
 ## Was noch offen ist
 
 - `vl` nutzt das US-Datumsformat `%m-%d-%y`. ISO würde sauber sortieren, aber die Bestandsdateien im Zettelkasten heißen nach altem Schema und müssten mitmigriert werden, inklusive Prüfung auf Querverweise. Nur als bewusste Entscheidung umsetzen.
-- gh ist nur als `workrepos` eingeloggt. Für PRs auf den Privat-Repos fehlt der `drzo1dberg`-Login, `gh auth login` plus `gh auth switch` würde das lösen.
+- gh war anfangs nur mit dem Arbeits-Account eingeloggt. Für PRs auf den privaten Repos fehlte der passende Login, `gh auth login` plus `gh auth switch` löst das.
 - Im Home liegen die Artefakte `xcopy.exe` und `table.html`, beide vermutlich löschbar.
 
 ## Rollback
