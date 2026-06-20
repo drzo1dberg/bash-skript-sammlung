@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# catdir — print every file under a directory as ONE scrollable stream.
+#   code/text -> bat (called "batcat" on Debian/Ubuntu)
+#   markdown  -> glow
+# No pager by default, so you can scroll in tmux copy-mode (prefix + [).
+# Use -p to page through `less -R` instead.
+
+set -euo pipefail
+
+# Tool detection (bat is "batcat" on Debian). Empty bat_bin -> fall back to cat.
+bat_bin="$(command -v batcat || command -v bat || true)"
+have_glow=0
+if command -v glow >/dev/null 2>&1; then have_glow=1; fi
+
+dir="."
+exts=""
+excludes=""
+page=0
+
+usage() {
+  cat <<'EOF'
+Usage: catdir [-e EXTS] [-x GLOBS] [-p] [-h] [DIR]
+
+  DIR        directory to read recursively (default: .)
+  -e EXTS    INCLUDE only these comma-separated extensions, e.g. -e sh,md
+  -x GLOBS   EXCLUDE comma-separated glob patterns. A pattern matches a file's
+             name (e.g. *.log, secret.tfvars) OR a directory anywhere in the
+             path (e.g. build) — so it drops file types, single files, or
+             whole folders. Repeatable. Excludes always win over -e.
+  -p         page through `less -R` instead of streaming to the terminal
+  -h         show this help
+
+Examples:
+  catdir ~/projects/myapp        # whole tree at once (tmux: prefix + [ to scroll)
+  catdir -e sh,py .              # only shell and python files
+  catdir -x '*.log,build' .      # everything except *.log files and build/ dirs
+  catdir -e tf -x secret.tfvars  # all .tf, but not secret.tfvars  (combine -e + -x)
+  catdir -p src                  # use a pager instead of streaming
+
+Skips (always): .git .hg .svn node_modules .terraform .terragrunt-cache .venv __pycache__
+Needs `bat`/`batcat` (falls back to `cat`) and optionally `glow` for markdown.
+EOF
+}
+
+while getopts ':e:x:ph' opt; do
+  case "$opt" in
+    e) exts="$OPTARG" ;;
+    x) excludes="${excludes:+$excludes,}$OPTARG" ;;
+    p) page=1 ;;
+    h) usage; exit 0 ;;
+    \?) echo "catdir: unknown option -$OPTARG" >&2; usage; exit 2 ;;
+    :) echo "catdir: -$OPTARG needs an argument" >&2; exit 2 ;;
+  esac
+done
+shift "$((OPTIND - 1))"
+if [ $# -gt 0 ]; then dir="$1"; fi
+
+if [ ! -d "$dir" ]; then
+  echo "catdir: not a directory: $dir" >&2
+  exit 1
+fi
+
+# Include test: no -e given => keep everything; otherwise keep only matching exts.
+want() {
+  [ -n "$exts" ] || return 0
+  local base ext
+  base="${1##*/}"
+  ext="${base##*.}"
+  case ",${exts,,}," in
+    *",${ext,,},"*) return 0 ;;
+  esac
+  return 1
+}
+
+# Exclude test for -x: returns 0 (drop it) when the file's name matches a glob,
+# or when any directory in its path matches one (lets -x drop file types,
+# a single file, or a whole folder). No -x given => never excludes.
+excluded() {
+  [ -n "$excludes" ] || return 1
+  local base="${1##*/}" rel="${1#./}" pat
+  local -a pats
+  IFS=',' read -r -a pats <<<"$excludes"
+  for pat in "${pats[@]}"; do
+    [ -n "$pat" ] || continue
+    # $pat is intentionally unquoted in the case patterns so it globs.
+    # shellcheck disable=SC2254
+    case "$base" in $pat) return 0 ;; esac
+    # shellcheck disable=SC2254
+    case "/$rel/" in */$pat/*) return 0 ;; esac
+  done
+  return 1
+}
+
+show_code() {
+  if [ -n "$bat_bin" ]; then
+    "$bat_bin" --paging=never --style=numbers -- "$1"
+  else
+    cat -- "$1"
+  fi
+}
+
+render() {
+  printf '\n==> %s <==\n\n' "${1#./}"
+  case "$1" in
+    *.md | *.markdown)
+      if [ "$have_glow" -eq 1 ]; then glow "$1"; else show_code "$1"; fi
+      ;;
+    *)
+      show_code "$1"
+      ;;
+  esac
+}
+
+run() {
+  local count=0 f
+  # Read the file list on FD 3, NOT stdin. Otherwise a renderer that reads
+  # stdin (e.g. glow) would drain the find stream and the loop would stop
+  # after the first file.
+  while IFS= read -r -d '' f <&3; do
+    want "$f" || continue
+    if excluded "$f"; then continue; fi
+    # stdin from /dev/null so a renderer (e.g. glow) can never block on or
+    # consume the terminal's stdin. The file list is on FD 3, not stdin.
+    render "$f" </dev/null
+    count=$((count + 1))
+  done 3< <(
+    find "$dir" \
+      \( -name .git -o -name .hg -o -name .svn \
+      -o -name node_modules -o -name .terraform -o -name .terragrunt-cache \
+      -o -name .venv -o -name __pycache__ \) -prune -o \
+      -type f -print0 | sort -z
+  )
+  echo "-- catdir: $count file(s) from '$dir' --" >&2
+}
+
+if [ "$page" -eq 1 ]; then
+  run | less -R
+else
+  run
+fi

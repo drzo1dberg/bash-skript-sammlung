@@ -12,6 +12,7 @@ Diese Skripte sind per Symlink aufrufbar, ohne vollen Pfad:
 |---|---|---|
 | `jiggle [intervall] [pixel]` | `/usr/local/bin/jiggle` -> `mousejiggle/jiggle.sh` | hält Windows wach, bewegt den Mauszeiger alle paar Sekunden minimal, ruft `jiggle.ps1` über `powershell.exe` |
 | `zk-archive` | `~/.local/bin/zk-archive` -> `zk-archive.sh` | Zettelkasten-Archiver, verschiebt alte Notizen nach `Zettelkasten/Archiv/YYYYKW##/`. Läuft als systemd-User-Timer, montags 09:00, eingerichtet von der nvim-config |
+| `catdir [-e ext] [-x glob] [-p] [pfad]` | `~/.local/bin/catdir` -> `catdir` | druckt alle Dateien eines Ordners rekursiv als EINEN scrollbaren Stream (Code via `bat`/`batcat`, Markdown via `glow`); ohne Pager -> im tmux-copy-mode scrollbar, `-p` erzwingt `less`. `-e` filtert nach Endungen, `-x` schließt per Glob aus (Dateien oder Ordner); shellcheck-clean |
 
 ## Eigenständige Skripte
 
