@@ -1,40 +1,40 @@
 # bash-tools-and-scripts
 
-Meine Sammlung eigener Bash-Werkzeuge, dazu Übungs- und Referenzmaterial aus dem Advanced Bash Scripting Guide. Gepflegt unter `~/github-repos/drzo1dberg/bash-tools-and-scripts`, Remote `drzo1dberg/bash-tools-and-scripts`.
+My collection of personal Bash tools, plus practice and reference material from the Advanced Bash Scripting Guide. Maintained at `~/github-repos/drzo1dberg/bash-tools-and-scripts`, remote `drzo1dberg/bash-tools-and-scripts`.
 
-Überblick über alle eigenen Tools im PATH, die Wrapper und alle Funktionen gibt der Befehl `tools` aus den Dotfiles.
+The `tools` command from the dotfiles prints an overview of all personal tools on the PATH, the wrappers, and all functions.
 
-## Im PATH verfügbar
+## Available on the PATH
 
-Diese Skripte sind per Symlink aufrufbar, ohne vollen Pfad:
+These scripts are callable via symlink, without the full path:
 
-| Aufruf | Symlink | Zweck |
+| Command | Symlink | Purpose |
 |---|---|---|
-| `jiggle [intervall] [pixel]` | `/usr/local/bin/jiggle` -> `mousejiggle/jiggle.sh` | hält Windows wach, bewegt den Mauszeiger alle paar Sekunden minimal, ruft `jiggle.ps1` über `powershell.exe` |
-| `zk-archive` | `~/.local/bin/zk-archive` -> `zk-archive.sh` | Zettelkasten-Archiver, verschiebt alte Notizen nach `Zettelkasten/Archiv/YYYYKW##/`. Läuft als systemd-User-Timer, montags 09:00, eingerichtet von der nvim-config |
-| `catdir [-e ext] [-x glob] [-p] [pfad]` | `~/.local/bin/catdir` -> `catdir` | druckt alle Dateien eines Ordners rekursiv als EINEN scrollbaren Stream (Code via `bat`/`batcat`, Markdown via `glow`); ohne Pager -> im tmux-copy-mode scrollbar, `-p` erzwingt `less`. `-e` filtert nach Endungen, `-x` schließt per Glob aus (Dateien oder Ordner); shellcheck-clean |
+| `jiggle [interval] [pixels]` | `/usr/local/bin/jiggle` -> `mousejiggle/jiggle.sh` | keeps Windows awake; nudges the mouse pointer slightly every few seconds; calls `jiggle.ps1` via `powershell.exe` |
+| `zk-archive` | `~/.local/bin/zk-archive` -> `zk-archive.sh` | Zettelkasten archiver; moves old notes to `Zettelkasten/Archiv/YYYYKW##/`. Runs as a systemd user timer, Mondays 09:00, set up by the nvim config |
+| `catdir [-e ext] [-x glob] [-p] [path]` | `~/.local/bin/catdir` -> `catdir` | prints all files in a directory recursively as ONE scrollable stream (code via `bat`/`batcat`, markdown via `glow`); no pager -> scrollable in tmux copy-mode, `-p` forces `less`. `-e` filters by extension, `-x` excludes by glob (files or folders); shellcheck-clean |
 
-## Eigenständige Skripte
+## Standalone scripts
 
-| Skript | Zweck |
+| Script | Purpose |
 |---|---|
-| `download_mailexport_basicAuth`, `extractLinks_mailExport`, `getEmailsFromList.sh` | Mail-Export holen und Links bzw. Adressen herausziehen |
-| `scanForTLS1.2orLess/`, `upgrade_storage_tls/` | TLS-Versionen scannen und Storage-Endpunkte anheben |
-| `api-user-export/` | User-Export über eine API |
-| `cherry-pick-folder-mover/` | Ordner gezielt zwischen Git-Repos übernehmen |
-| `gogo-golang-file-creator/gogo.sh` | Go-Quelldateien aus einer Vorlage anlegen |
-| `spotlightdl-bash/` | Windows-Spotlight-Bilder herunterladen |
-| `set-catppuccin-theme <flavour>` | Catppuccin-Variante setzen, `latte`, `frappe`, `macchiato` oder `mocha` |
-| `cleanup-simple.sh`, `cleanup-midlvl.sh`, `cleanup-pro.sh` | dasselbe Aufräumen in drei Ausbaustufen |
-| `random-generator`, `rename-script`, `zmore` | kleine Helfer: Zufallswert, Stapel-Umbenennung, gzip mit `more` |
+| `download_mailexport_basicAuth`, `extractLinks_mailExport`, `getEmailsFromList.sh` | fetch the mail export and pull out links or addresses |
+| `scanForTLS1.2orLess/`, `upgrade_storage_tls/` | scan TLS versions and raise storage endpoints |
+| `api-user-export/` | user export via an API |
+| `cherry-pick-folder-mover/` | move specific folders between Git repos |
+| `gogo-golang-file-creator/gogo.sh` | create Go source files from a template |
+| `spotlightdl-bash/` | download Windows Spotlight images |
+| `set-catppuccin-theme <flavour>` | set the Catppuccin flavour: `latte`, `frappe`, `macchiato`, or `mocha` |
+| `cleanup-simple.sh`, `cleanup-midlvl.sh`, `cleanup-pro.sh` | the same cleanup in three levels |
+| `random-generator`, `rename-script`, `zmore` | small helpers: random value, batch rename, gzip piped through `more` |
 
-## Dokumentation
+## Documentation
 
-- `wsl2-setup-ueberholung-2026-06.md` ist der ausführliche Guide zur WSL2-Debian-Überholung vom 11.06.2026: History, Dotfiles, Tools, WSL-Interop, nvim. Die Begründungen hinter den Dotfile-Entscheidungen stehen hier.
+- `wsl2-setup-ueberholung-2026-06.md` is the detailed guide to the WSL2/Debian overhaul from 2026-06-11: history, dotfiles, tools, WSL interop, nvim. The rationale behind the dotfile decisions lives here.
 
-## Übung und Referenz
+## Practice & reference
 
-Kein produktives Tooling, sondern Lernmaterial. Beim Aufräumen nicht mit den echten Tools verwechseln:
+Not production tooling but learning material. When cleaning up, don't confuse these with the real tools:
 
-- `advanced-bash-scripting-guide/`, `bash-guide-for-beginners/`: geklonte Guides
-- ABS-Übungen: `str-test`, `testing`, `startup-script-abs-guide`, `string-manipulation-exc10-1`, `artithmeticVsStringComparison`, `check-numbers-of-parameters-snippet.sh`, `testingForSymlinks`
+- `advanced-bash-scripting-guide/`, `bash-guide-for-beginners/`: cloned guides
+- ABS exercises: `str-test`, `testing`, `startup-script-abs-guide`, `string-manipulation-exc10-1`, `artithmeticVsStringComparison`, `check-numbers-of-parameters-snippet.sh`, `testingForSymlinks`
