@@ -16,6 +16,7 @@ dir="."
 exts=""
 excludes=""
 page=0
+width=""
 
 usage() {
   cat <<'EOF'
@@ -28,6 +29,7 @@ Usage: catdir [-e EXTS] [-x GLOBS] [-p] [-h] [DIR]
              path (e.g. build) — so it drops file types, single files, or
              whole folders. Repeatable. Excludes always win over -e.
   -p         page through `less -R` instead of streaming to the terminal
+  -w WIDTH   set output width for bat/glow (terminal columns)
   -h         show this help
 
 Examples:
@@ -42,11 +44,12 @@ Needs `bat`/`batcat` (falls back to `cat`) and optionally `glow` for markdown.
 EOF
 }
 
-while getopts ':e:x:ph' opt; do
+while getopts ':e:x:pw:h' opt; do
   case "$opt" in
     e) exts="$OPTARG" ;;
     x) excludes="${excludes:+$excludes,}$OPTARG" ;;
     p) page=1 ;;
+    w) width="$OPTARG" ;;
     h) usage; exit 0 ;;
     \?) echo "catdir: unknown option -$OPTARG" >&2; usage; exit 2 ;;
     :) echo "catdir: -$OPTARG needs an argument" >&2; exit 2 ;;
@@ -58,6 +61,11 @@ if [ $# -gt 0 ]; then dir="$1"; fi
 if [ ! -d "$dir" ]; then
   echo "catdir: not a directory: $dir" >&2
   exit 1
+fi
+
+if [ -n "$width" ] && ! [[ "$width" =~ ^[1-9][0-9]*$ ]]; then
+  echo "catdir: -w needs a positive integer, got: $width" >&2
+  exit 2
 fi
 
 # Include test: no -e given => keep everything; otherwise keep only matching exts.
@@ -93,7 +101,11 @@ excluded() {
 
 show_code() {
   if [ -n "$bat_bin" ]; then
-    "$bat_bin" --paging=never --style=numbers -- "$1"
+    if [ -n "$width" ]; then
+      "$bat_bin" --paging=never --style=numbers --terminal-width="$width" -- "$1"
+    else
+      "$bat_bin" --paging=never --style=numbers -- "$1"
+    fi
   else
     cat -- "$1"
   fi
@@ -103,7 +115,11 @@ render() {
   printf '\n==> %s <==\n\n' "${1#./}"
   case "$1" in
     *.md | *.markdown)
-      if [ "$have_glow" -eq 1 ]; then glow "$1"; else show_code "$1"; fi
+      if [ "$have_glow" -eq 1 ]; then
+        if [ -n "$width" ]; then glow -w "$width" "$1"; else glow "$1"; fi
+      else
+        show_code "$1"
+      fi
       ;;
     *)
       show_code "$1"
