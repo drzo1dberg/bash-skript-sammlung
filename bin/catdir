@@ -4,6 +4,7 @@
 #   markdown  -> glow
 # No pager by default, so you can scroll in tmux copy-mode (prefix + [).
 # Use -p to page through `less -R` instead.
+# Auto-detects terminal width when -w is omitted.
 
 set -euo pipefail
 
@@ -29,7 +30,7 @@ Usage: catdir [-e EXTS] [-x GLOBS] [-p] [-h] [DIR]
              path (e.g. build) — so it drops file types, single files, or
              whole folders. Repeatable. Excludes always win over -e.
   -p         page through `less -R` instead of streaming to the terminal
-  -w WIDTH   set output width for bat/glow (terminal columns)
+  -w WIDTH   force output width; default: auto-detect terminal columns
   -h         show this help
 
 Examples:
@@ -67,6 +68,20 @@ if [ -n "$width" ] && ! [[ "$width" =~ ^[1-9][0-9]*$ ]]; then
   echo "catdir: -w needs a positive integer, got: $width" >&2
   exit 2
 fi
+
+resolve_width() {
+  [ -n "$width" ] && return 0
+  if [ -t 1 ]; then
+    width="$(tput cols 2>/dev/null || true)"
+  elif [ -r /dev/tty ]; then
+    width="$(tput cols </dev/tty 2>/dev/null || true)"
+  fi
+  if [ -n "$width" ] && ! [[ "$width" =~ ^[1-9][0-9]*$ ]]; then
+    width=""
+  fi
+}
+
+resolve_width
 
 # Include test: no -e given => keep everything; otherwise keep only matching exts.
 want() {
