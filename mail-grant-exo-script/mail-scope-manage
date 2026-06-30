@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Launcher for the scope read/change .ps1, run from WSL via Windows PowerShell.
+set -euo pipefail
+
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+PS1_WIN="$(wslpath -w "$SCRIPT_DIR/mail-scope-manage.ps1")"
+
+# Pflicht-Parameter: Ziel-Env als erstes Argument, bestimmt welche mailrbac.<env>.env
+# geladen wird, z.B. test oder acc. set -a exportiert alle gesourcten Variablen,
+# sodass PowerShell sie als $env:MAILRBAC_* erbt. mailrbac.<env>.env ist gitignored.
+ENV_NAME="${1:-}"
+if [[ -z "$ENV_NAME" || "$ENV_NAME" == -* ]]; then
+    echo "Usage: $(basename "$0") <env> [zusaetzliche -Parameter fuers .ps1]" >&2
+    echo "  <env>: Name einer scripts/mailrbac.<env>.env, vorhanden:" \
+         "$(cd "$SCRIPT_DIR" && ls mailrbac.*.env 2>/dev/null | sed 's/^mailrbac\.//; s/\.env$//' | paste -sd', ' -)" >&2
+    exit 64
+fi
+shift
+ENV_FILE="$SCRIPT_DIR/mailrbac.${ENV_NAME}.env"
+if [[ ! -f "$ENV_FILE" ]]; then
+    echo "Keine Config gefunden: $ENV_FILE" >&2
+    exit 66
+fi
+set -a
+# shellcheck source=/dev/null
+source "$ENV_FILE"
+set +a
+
+if command -v pwsh.exe >/dev/null 2>&1; then
+    PS_EXE="pwsh.exe"
+else
+    PS_EXE="powershell.exe"
+fi
+
+"$PS_EXE" -NoProfile -ExecutionPolicy Bypass -File "$PS1_WIN" "$@"
