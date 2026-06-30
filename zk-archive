@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
+# author: nunes jacobs
 # zk-archive.sh
 # Verschiebt alte Zettelkasten-Dateien in wochenweise Archiv-Ordner.
 #
