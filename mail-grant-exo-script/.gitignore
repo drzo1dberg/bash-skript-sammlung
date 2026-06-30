@@ -1,0 +1,3 @@
+# Ausgefuellte Per-Env-Configs nie committen, nur die Vorlage
+mailrbac.*.env
+!mailrbac.example.env
