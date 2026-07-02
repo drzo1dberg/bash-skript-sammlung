@@ -29,6 +29,13 @@ set -a
 source "$ENV_FILE"
 set +a
 
+# WSLENV: Windows-PowerShell (pwsh.exe/powershell.exe) erbt WSL-Umgebungsvariablen
+# NUR, wenn ihre Namen hier stehen. Sonst sieht das .ps1 die gesourcten
+# $env:MAILRBAC_* nicht und faellt auf seine hartkodierten Defaults zurueck.
+# compgen zieht alle MAILRBAC_*-Namen aus der geladenen env-Datei.
+WSLENV_MAILRBAC="$(compgen -v MAILRBAC_ | paste -sd: -)"
+export WSLENV="${WSLENV_MAILRBAC}${WSLENV:+:$WSLENV}"
+
 # Prefer PowerShell 7, fall back to Windows PowerShell 5.1
 if command -v pwsh.exe >/dev/null 2>&1; then
     PS_EXE="pwsh.exe"
