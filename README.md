@@ -27,6 +27,7 @@ These scripts are callable via symlink, without the full path:
 | `set-catppuccin-theme <flavour>` | set the Catppuccin flavour: `latte`, `frappe`, `macchiato`, or `mocha` |
 | `cleanup-simple.sh`, `cleanup-midlvl.sh`, `cleanup-pro.sh` | the same cleanup in three levels |
 | `random-generator`, `rename-script`, `zmore` | small helpers: random value, batch rename, gzip piped through `more` |
+| `kv-edit-window/`, `kv-human-role/`, `kv-seed-appreg-secret/`, `sql-contained-users/` | Azure post-apply helpers (env-based, device-code login): temp Key Vault public window for one IP, grant/revoke a KV role by UPN, seed FE/BE app-registration client secrets into a KV, create contained SQL users for managed identities. shellcheck-clean |
 
 ## Documentation
 
