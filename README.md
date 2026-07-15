@@ -10,6 +10,7 @@ The `tools` command from the dotfiles prints an overview of all personal tools o
 |---|---|
 | `bin/` | small standalone CLI tools, some symlinked into `~/.local/bin` |
 | `tools/` | one directory per personal tool |
+| `nvidia-latest-compatible/` | Debian 13 helper for selecting a compatible official NVIDIA driver branch |
 | `azure/` | generic, env-based copies of Azure and M365 helpers; the context-specific originals live in their work repos |
 | `docs/` | longer-form documentation |
 | `learning/` | practice and reference material, not production tooling |
@@ -34,6 +35,14 @@ These scripts are callable via symlink, without the full path:
 | `gogo-golang-file-creator/gogo.sh` | create Go source files from a template |
 | `spotlightdl-bash/` | download Windows Spotlight images |
 | `mousejiggle/` | retired. Kept the mouse pointer moving to keep Windows awake; the `jiggle` symlink was removed from `~/.local/bin` |
+
+## NVIDIA driver helper
+
+`nvidia-latest-compatible/nvidia-latest-compatible.sh [--check|--apply|--verify]`
+safely selects the newest official Debian 13 driver that still lists every local
+NVIDIA display GPU as current. It provides a read-only check, a refreshed
+interactive upgrade with branch pinning and snapshot, and post-reboot
+verification.
 
 ## azure/
 
