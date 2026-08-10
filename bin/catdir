@@ -85,7 +85,11 @@ resolve_width() {
   if [ -t 1 ]; then
     width="$(tput cols 2>/dev/null || true)"
   elif [ -r /dev/tty ]; then
-    width="$(tput cols </dev/tty 2>/dev/null || true)"
+    # 2>/dev/null deckt nur tput ab. Schlaegt schon das Oeffnen von /dev/tty
+    # fehl, meldet die Shell selbst, und diese Meldung landet ungefiltert auf
+    # stderr. Der Test oben schuetzt davor nicht: -r prueft die Rechte, nicht
+    # ob ein Controlling Terminal existiert. Deshalb die ganze Gruppe umleiten.
+    width="$( { tput cols </dev/tty; } 2>/dev/null || true )"
   fi
   if [ -n "$width" ] && ! [[ "$width" =~ ^[1-9][0-9]*$ ]]; then
     width=""
