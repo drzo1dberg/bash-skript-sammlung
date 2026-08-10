@@ -21,7 +21,7 @@ These scripts are callable via symlink, without the full path:
 
 | Command | Symlink | Purpose |
 |---|---|---|
-| `zk-archive` | `~/.local/bin/zk-archive` -> `bin/zk-archive` | Zettelkasten archiver; moves old notes to `Zettelkasten/Archiv/YYYYKW##/`. Runs as a systemd user timer, Mondays 09:00, set up by the nvim config |
+| `zk-archive` | `~/.local/bin/zk-archive` -> `bin/zk-archive` | Zettelkasten archiver; moves old notes to `zettelkasten/archiv/YYYYkw##/`. Runs as a systemd user timer, Mondays 09:00, set up by the nvim config |
 | `catdir [-e ext] [-x glob] [-p] [path]` | `~/.local/bin/catdir` -> `bin/catdir` | prints all files in a directory recursively as ONE scrollable stream (code via `bat`/`batcat`, markdown via `glow`); no pager -> scrollable in tmux copy-mode, `-p` forces `less`. `-e` filters by extension, `-x` excludes by glob (files or folders); shellcheck-clean |
 
 `bin/` also holds `set-catppuccin-theme <flavour>`, which sets the Catppuccin flavour: `latte`, `frappe`, `macchiato`, or `mocha`. Not symlinked.

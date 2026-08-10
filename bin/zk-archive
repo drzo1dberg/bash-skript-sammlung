@@ -5,7 +5,10 @@
 # Verschiebt alte Zettelkasten-Dateien in wochenweise Archiv-Ordner.
 #
 # Erwartetes Dateinamen-Format : MM-DD-YY.md   (z.B. 05-26-26.md)
-# Archiv-Layout                : Archiv/YYYYKW## (z.B. Archiv/2026KW20)
+# Archiv-Layout                : archiv/YYYYkw## (z.B. archiv/2026kw20)
+# Kleinschreibung ist Absicht: der Obsidian-Vault liegt unter /mnt/c auf einem
+# case-insensitiven Dateisystem, gemischte Schreibweisen ergeben dort Pfade, die
+# je nach Werkzeug unterschiedlich aufgeloest werden.
 # Gruppiert nach ISO-Woche (%G/%V) des Datums *im Dateinamen*, nicht mtime.
 #
 # Retention zaehlt in ISO-Kalenderwochen, nicht in Tagen:
@@ -27,10 +30,10 @@ set -euo pipefail
 # Vault-Aufloesung: explizites ZK_DIR gewinnt, dann ~/.config/obsidian-vault
 # (geschrieben von nvim-config/install.sh --obsidian-location), sonst ~/bf
 if [ -z "${ZK_DIR:-}" ] && [ -r "$HOME/.config/obsidian-vault" ]; then
-  ZK_DIR="$(head -n1 "$HOME/.config/obsidian-vault")/Zettelkasten"
+  ZK_DIR="$(head -n1 "$HOME/.config/obsidian-vault")/zettelkasten"
 fi
-ZK_DIR="${ZK_DIR:-$HOME/bf/Zettelkasten}"   # Quelle
-ARCHIVE_SUBDIR="Archiv"                     # Unterordner unter ZK_DIR
+ZK_DIR="${ZK_DIR:-$HOME/bf/zettelkasten}"   # Quelle
+ARCHIVE_SUBDIR="archiv"                     # Unterordner unter ZK_DIR
 RETENTION_WEEKS=2                           # Anzahl ISO-Wochen die bleiben
                                             #   1 = nur aktuelle Woche
                                             #   2 = aktuelle + letzte Woche
@@ -109,7 +112,7 @@ for f in "$ZK_DIR"/$FILE_GLOB; do
 
   iso_year=$(date -d "$iso_date" +%G)
   iso_week=$(date -d "$iso_date" +%V)
-  rel_dir="${ARCHIVE_SUBDIR}/${iso_year}KW${iso_week}"
+  rel_dir="${ARCHIVE_SUBDIR}/${iso_year}kw${iso_week}"
   target_dir="$ZK_DIR/$rel_dir"
   target="$target_dir/$bn"
 
