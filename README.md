@@ -10,6 +10,7 @@ The `tools` command from the dotfiles prints an overview of all personal tools o
 |---|---|
 | `bin/` | small standalone CLI tools, some symlinked into `~/.local/bin` |
 | `tools/` | one directory per personal tool |
+| `nvidia-latest-compatible/` | Debian 13 helper for selecting a compatible official NVIDIA driver branch |
 | `azure/` | generic, env-based copies of Azure and M365 helpers; the context-specific originals live in their work repos |
 | `docs/` | longer-form documentation |
 | `learning/` | practice and reference material, not production tooling |
@@ -20,7 +21,7 @@ These scripts are callable via symlink, without the full path:
 
 | Command | Symlink | Purpose |
 |---|---|---|
-| `zk-archive` | `~/.local/bin/zk-archive` -> `bin/zk-archive` | Zettelkasten archiver; moves old notes to `Zettelkasten/Archiv/YYYYKW##/`. Runs as a systemd user timer, Mondays 09:00, set up by the nvim config |
+| `zk-archive` | `~/.local/bin/zk-archive` -> `bin/zk-archive` | Zettelkasten archiver; moves old notes to `zettelkasten/archiv/YYYYkw##/`. Runs as a systemd user timer, Mondays 09:00, set up by the nvim config |
 | `catdir [-e ext] [-x glob] [-p] [path]` | `~/.local/bin/catdir` -> `bin/catdir` | prints all files in a directory recursively as ONE scrollable stream (code via `bat`/`batcat`, markdown via `glow`); no pager -> scrollable in tmux copy-mode, `-p` forces `less`. `-e` filters by extension, `-x` excludes by glob (files or folders); shellcheck-clean |
 
 `bin/` also holds `set-catppuccin-theme <flavour>`, which sets the Catppuccin flavour: `latte`, `frappe`, `macchiato`, or `mocha`. Not symlinked.
@@ -34,6 +35,14 @@ These scripts are callable via symlink, without the full path:
 | `gogo-golang-file-creator/gogo.sh` | create Go source files from a template |
 | `spotlightdl-bash/` | download Windows Spotlight images |
 | `mousejiggle/` | retired. Kept the mouse pointer moving to keep Windows awake; the `jiggle` symlink was removed from `~/.local/bin` |
+
+## NVIDIA driver helper
+
+`nvidia-latest-compatible/nvidia-latest-compatible.sh [--check|--apply|--verify]`
+safely selects the newest official Debian 13 driver that still lists every local
+NVIDIA display GPU as current. It provides a read-only check, a refreshed
+interactive upgrade with branch pinning and snapshot, and post-reboot
+verification.
 
 ## azure/
 
