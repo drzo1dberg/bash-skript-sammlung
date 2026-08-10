@@ -7,6 +7,16 @@
 
 set -euo pipefail
 
+# --- Config (tweak here) -----------------------------------------------------
+readonly GLOW_WRAP_WIDTH=0                 # glow -w; 0 = no hard wrap, full width
+readonly BAT_TAB_WIDTH=0                    # bat --tabs; 0 = keep tabs verbatim
+readonly BAT_STYLE="numbers"               # bat --style
+readonly BAT_PAGING="never"                # bat --paging
+readonly PAGER_CMD=(less -R)               # pager for -p
+readonly PRUNE_DIRS=(.git .hg .svn node_modules .terraform .terragrunt-cache .venv __pycache__)
+readonly MARKDOWN_GLOBS=('*.md' '*.markdown')   # rendered via glow; rest via bat
+# -----------------------------------------------------------------------------
+
 # Tool detection (bat is "batcat" on Debian). Empty bat_bin -> fall back to cat.
 bat_bin="$(command -v batcat || command -v bat || true)"
 have_glow=0
@@ -36,8 +46,9 @@ Examples:
   catdir -x '*.log,build' .      # everything except *.log files and build/ dirs
   catdir -e tf -x secret.tfvars  # all .tf, but not secret.tfvars  (combine -e + -x)
   catdir -p src                  # use a pager instead of streaming
-
-Skips (always): .git .hg .svn node_modules .terraform .terragrunt-cache .venv __pycache__
+EOF
+  printf '\nSkips (always): %s\n' "${PRUNE_DIRS[*]}"
+  cat <<'EOF'
 Needs `bat`/`batcat` (falls back to `cat`) and optionally `glow` for markdown.
 EOF
 }
@@ -93,26 +104,39 @@ excluded() {
 
 show_code() {
   if [ -n "$bat_bin" ]; then
-    "$bat_bin" --paging=never --style=numbers -- "$1"
+    "$bat_bin" --paging="$BAT_PAGING" --style="$BAT_STYLE" --tabs "$BAT_TAB_WIDTH" -- "$1"
   else
     cat -- "$1"
   fi
 }
 
+is_markdown() {
+  local base="${1##*/}" glob
+  for glob in "${MARKDOWN_GLOBS[@]}"; do
+    # shellcheck disable=SC2254  # $glob must stay unquoted to act as a pattern
+    case "$base" in $glob) return 0 ;; esac
+  done
+  return 1
+}
+
 render() {
   printf '\n==> %s <==\n\n' "${1#./}"
-  case "$1" in
-    *.md | *.markdown)
-      if [ "$have_glow" -eq 1 ]; then glow "$1"; else show_code "$1"; fi
-      ;;
-    *)
-      show_code "$1"
-      ;;
-  esac
+  if is_markdown "$1" && [ "$have_glow" -eq 1 ]; then
+    glow -w "$GLOW_WRAP_WIDTH" "$1"
+  else
+    show_code "$1"
+  fi
 }
 
 run() {
-  local count=0 f
+  local count=0 f d
+  # Build find's prune expr from PRUNE_DIRS: ( -name A -o -name B ... )
+  local -a prune=( '(' )
+  for d in "${PRUNE_DIRS[@]}"; do
+    [ "${#prune[@]}" -gt 1 ] && prune+=( -o )
+    prune+=( -name "$d" )
+  done
+  prune+=( ')' )
   # Read the file list on FD 3, NOT stdin. Otherwise a renderer that reads
   # stdin (e.g. glow) would drain the find stream and the loop would stop
   # after the first file.
@@ -124,17 +148,13 @@ run() {
     render "$f" </dev/null
     count=$((count + 1))
   done 3< <(
-    find "$dir" \
-      \( -name .git -o -name .hg -o -name .svn \
-      -o -name node_modules -o -name .terraform -o -name .terragrunt-cache \
-      -o -name .venv -o -name __pycache__ \) -prune -o \
-      -type f -print0 | sort -z
+    find "$dir" "${prune[@]}" -prune -o -type f -print0 | sort -z
   )
   echo "-- catdir: $count file(s) from '$dir' --" >&2
 }
 
 if [ "$page" -eq 1 ]; then
-  run | less -R
+  run | "${PAGER_CMD[@]}"
 else
   run
 fi
